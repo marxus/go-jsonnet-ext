@@ -1,0 +1,88 @@
+version: 1
+
+before:
+  hooks:
+    - |
+      bash -ce '
+        rm -rf go-jsonnet && git clone https://github.com/google/go-jsonnet.git --branch ${TAG:-v{{ .Version }}} --depth 1 go-jsonnet && cd go-jsonnet
+        cp -r ../ext/. .
+        ./patch-code.sh
+      '
+
+builds:
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+    id: jsonnet
+    dir: go-jsonnet
+    main: ./cmd/jsonnet
+    binary: jsonnet
+
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+    id: jsonnetfmt
+    dir: go-jsonnet
+    main: ./cmd/jsonnetfmt
+    binary: jsonnetfmt
+
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+    id: jsonnet-lint
+    dir: go-jsonnet
+    main: ./cmd/jsonnet-lint
+    binary: jsonnet-lint
+
+  - env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+    id: jsonnet-deps
+    dir: go-jsonnet
+    main: ./cmd/jsonnet-deps
+    binary: jsonnet-deps
+
+archives:
+  - name_template: "go-jsonnet-{{ .Os }}-{{ .Arch }}"
+    files: ["_-_-_*_-_-_"]
+
+brews:
+  - repository:
+      owner: marxus
+      name: go-jsonnet-ext
+    folder: brew/$TAG
+    install: |
+      for _bin in ["jsonnet", "jsonnetfmt", "jsonnet-lint", "jsonnet-deps"] do bin.install _bin end
+
+nix:
+  - repository:
+      owner: marxus
+      name: go-jsonnet-ext
+    path: "nix/{{ .Tag }}.nix"
+    install: |
+      mkdir -p $out/bin
+      cp -vr * $out/bin

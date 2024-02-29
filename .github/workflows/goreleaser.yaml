@@ -1,0 +1,21 @@
+name: goreleaser
+
+"on": { push: { tags: ["*"] } }
+
+permissions: { contents: write }
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v4
+      - uses: cachix/install-nix-action@v22
+      - run: 'cat <<<"$(cat .goreleaser.yaml | env TAG=${{ github.ref_name }} envsubst ''$TAG'')" >.goreleaser.yaml'
+      - uses: goreleaser/goreleaser-action@v5
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        with:
+          distribution: goreleaser
+          version: latest
+          args: "release --clean --skip=validate"
